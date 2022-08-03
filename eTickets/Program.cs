@@ -1,6 +1,7 @@
 using eTickets.Data;
 using eTickets.Data.Services;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +13,7 @@ builder.Services.AddDbContext<TicketDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString")));
 
 // Service Configuration
-IServiceCollection serviceCollection = builder.Services.AddScoped<IActorsService, ActorsService>();
+builder.Services.AddScoped<IActorsService, ActorsService>();
 
 var app = builder.Build();
 
@@ -35,7 +36,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+Log.Logger = new LoggerConfiguration()
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .CreateLogger();
+
 //Seed Database
-TicketDbInitializer.seed(app);
+await TicketDbInitializer.SeedAsync(app);
 
 app.Run();

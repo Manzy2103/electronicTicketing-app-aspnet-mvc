@@ -5,17 +5,24 @@ namespace eTickets.Data
 {
     public class TicketDbInitializer
     {
-        public static void seed(IApplicationBuilder applicationBuilder)
+        public static async Task SeedAsync(IApplicationBuilder applicationBuilder)
         {
-            using(var serviceScope = applicationBuilder.ApplicationServices.CreateScope())
+            using (var serviceScope = applicationBuilder.ApplicationServices.CreateScope())
             {
-                var context = serviceScope.ServiceProvider.GetService<TicketDbContext>();
-                context.Database.EnsureCreated();
-
-                //Cinemas
-                if (!context.Cinemas.Any())
+                var ServiceProvider = serviceScope.ServiceProvider;
+                var context = ServiceProvider.GetService<TicketDbContext>();
+                var logger = ServiceProvider.GetRequiredService<ILogger<TicketDbContext>>();
+                await context.Database.EnsureCreatedAsync();
+                var isFound = false;
+                try
                 {
-                    context.Cinemas.AddRange(new List<Cinema>()
+                    logger.LogInformation($"Seeding to database associated with context {context.Database.ProviderName}");
+
+                    //Cinemas
+                    if (!context.Cinemas.Any())
+                    {
+                        isFound = true;
+                        context.Cinemas.AddRange(new List<Cinema>()
                     {
                         new Cinema()
                         {
@@ -48,13 +55,14 @@ namespace eTickets.Data
                             Description = "This is the description of the first cinema"
                         },
                     });
-                    context.SaveChanges();
+                        await context.SaveChangesAsync();
+                    }
 
-                }
-                //Actors
-                if (!context.Actors.Any())
-                {
-                    context.Actors.AddRange(new List<Actor>()
+                    //Actors
+                    if (!context.Actors.Any())
+                    {
+                        isFound = true;
+                        context.Actors.AddRange(new List<Actor>()
                     {
                         new Actor()
                         {
@@ -88,14 +96,14 @@ namespace eTickets.Data
                             ProfilePictureURL = "http://dotnethow.net/images/actors/actor-5.jpeg"
                         }
                     });
-                    context.SaveChanges();
+                        await context.SaveChangesAsync();
+                    }
 
-                }
-
-                //Producers
-                if (!context.Producers.Any())
-                {
-                    context.Producers.AddRange(new List<Producer>()
+                    //Producers
+                    if (!context.Producers.Any())
+                    {
+                        isFound = true;
+                        context.Producers.AddRange(new List<Producer>()
                     {
                         new Producer()
                         {
@@ -129,14 +137,16 @@ namespace eTickets.Data
                             ProfilePictureURL = "http://dotnethow.net/images/producers/producer-5.jpeg"
                         }
                     });
-                    context.SaveChanges();
+                        await context.SaveChangesAsync();
+                    }
 
-                }
-
-                //Movies
-                if (!context.Movies.Any())
-                {
-                    context.Movies.AddRange(new List<Movie>()
+                    //Movies
+                    if (!context.Movies.Any())
+                    {
+                        isFound = true;
+                        var cinemasIds = context.Cinemas.Select(x => x.CinemaId).ToList();
+                        var producersIds = context.Producers.Select(x => x.ProducerId).ToList();
+                        context.Movies.AddRange(new List<Movie>()
                     {
                         new Movie()
                         {
@@ -146,8 +156,8 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-3.jpeg",
                             StartDate = DateTime.Now.AddDays(-10),
                             EndDate = DateTime.Now.AddDays(10),
-                            CinemaId = 3,
-                            ProducerId = 3,
+                            CinemaId = cinemasIds[1],
+                            ProducerId = producersIds[1],
                             movieCategory = MovieCategory.Documentary
                         },
                         new Movie()
@@ -158,8 +168,8 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-1.jpeg",
                             StartDate = DateTime.Now,
                             EndDate = DateTime.Now.AddDays(3),
-                            CinemaId = 1,
-                            ProducerId = 1,
+                            CinemaId = cinemasIds[2],
+                            ProducerId = producersIds[2],
                             movieCategory = MovieCategory.Action
                         },
                         new Movie()
@@ -170,8 +180,8 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-4.jpeg",
                             StartDate = DateTime.Now,
                             EndDate = DateTime.Now.AddDays(7),
-                            CinemaId = 4,
-                            ProducerId = 4,
+                            CinemaId = cinemasIds[3],
+                            ProducerId = producersIds[3],
                             movieCategory = MovieCategory.Horror
                         },
                         new Movie()
@@ -182,8 +192,8 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-6.jpeg",
                             StartDate = DateTime.Now.AddDays(-10),
                             EndDate = DateTime.Now.AddDays(-5),
-                            CinemaId = 1,
-                            ProducerId = 2,
+                            CinemaId = cinemasIds[4],
+                            ProducerId = producersIds[4],
                             movieCategory = MovieCategory.Documentary
                         },
                         new Movie()
@@ -194,8 +204,8 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-7.jpeg",
                             StartDate = DateTime.Now.AddDays(-10),
                             EndDate = DateTime.Now.AddDays(-2),
-                            CinemaId = 1,
-                            ProducerId = 3,
+                            CinemaId = cinemasIds[3],
+                            ProducerId = producersIds[3],
                             movieCategory = MovieCategory.Cartoon
                         },
                         new Movie()
@@ -206,118 +216,52 @@ namespace eTickets.Data
                             ImageURL = "http://dotnethow.net/images/movies/movie-8.jpeg",
                             StartDate = DateTime.Now.AddDays(3),
                             EndDate = DateTime.Now.AddDays(20),
-                            CinemaId = 1,
-                            ProducerId = 5,
+                            CinemaId = cinemasIds[0],
+                            ProducerId = producersIds[0],
                             movieCategory = MovieCategory.Drama
                         }
                     });
-                    context.SaveChanges();
+                        await context.SaveChangesAsync();
+                    }
 
-                }
-
-                //Actors & Movies
-                if (!context.Actor_Movies.Any())
-                {
-                    context.Actor_Movies.AddRange(new List<Actor_Movie>()
+                    //Actors & Movies
+                    if (!context.Actor_Movies.Any())
                     {
-                        new Actor_Movie()
+                        isFound = true;
+                        var rand = new Random();
+                        var actorsIds = context.Actors.Select(x => x.ActorId).ToArray();
+                        var moviesIds = context.Movies.Select(x => x.MovieId).ToArray();
+                        for (int i = 0; i < 10; i++)
                         {
-                            ActorId = 1,
-                            MovieId = 1
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 3,
-                            MovieId = 1
-                        },
+                            var actorMovie = new Actor_Movie()
+                            {
+                                ActorId = actorsIds[rand.Next(actorsIds.Length)],
+                                MovieId = moviesIds[rand.Next(moviesIds.Length)]
+                            };
+                            var alreadyExists = context.Actor_Movies.Any(x => x.MovieId.Equals(actorMovie.MovieId)
+                            && x.ActorId.Equals(actorMovie.ActorId));
+                            if (!alreadyExists)
+                            {
+                                context.Actor_Movies.Add(actorMovie);
+                                await context.SaveChangesAsync();
+                            }
+                        }
+                    }
 
-                         new Actor_Movie()
-                        {
-                            ActorId = 1,
-                            MovieId = 2
-                        },
-                         new Actor_Movie()
-                        {
-                            ActorId = 4,
-                            MovieId = 2
-                        },
-
-                        new Actor_Movie()
-                        {
-                            ActorId = 1,
-                            MovieId = 3
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 2,
-                            MovieId = 3
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 5,
-                            MovieId = 3
-                        },
-
-
-                        new Actor_Movie()
-                        {
-                            ActorId = 2,
-                            MovieId = 4
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 3,
-                            MovieId = 4
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 4,
-                            MovieId = 4
-                        },
-
-
-                        new Actor_Movie()
-                        {
-                            ActorId = 2,
-                            MovieId = 5
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 3,
-                            MovieId = 5
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 4,
-                            MovieId = 5
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 5,
-                            MovieId = 5
-                        },
-
-
-                        new Actor_Movie()
-                        {
-                            ActorId = 3,
-                            MovieId = 6
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 4,
-                            MovieId = 6
-                        },
-                        new Actor_Movie()
-                        {
-                            ActorId = 5,
-                            MovieId = 6
-                        },
-                    });
-                    context.SaveChanges();
-
+                    if (isFound)
+                    {
+                        logger.LogInformation($"Seeding to database associated with context {context.Database.ProviderName} Completed successfully");
+                    }
+                    else
+                    {
+                        logger.LogInformation("All data is available in the database nothing to seed");
+                    }
                 }
-
+                catch (Exception ex)
+                {
+                    logger.LogInformation($"Filed to seed to the database Message: {ex.Message}");
+                    logger.LogInformation($"Filed to seed to the database StackTrace: {ex.StackTrace}");
+                }
             }
         }
     }
