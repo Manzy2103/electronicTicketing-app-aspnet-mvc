@@ -1,5 +1,4 @@
-﻿using eTickets.Data;
-using eTickets.Data.Services;
+﻿using eTickets.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace eTickets.Controllers
@@ -15,15 +14,21 @@ namespace eTickets.Controllers
 
         public async Task<IActionResult> Index()
         {
-            IEnumerable<Models.Actor>? data = await _service.GetAll();
-            return View(data);
+            var actors = await _service.GetAll();
+            return View(actors);
         }
+
+        [HttpPost]
         public IActionResult Create(string id)
         {
-            if(id == null || id.Equals(string.Empty))
+            if(string.IsNullOrWhiteSpace(id))
             {
-                ViewBag.Title = "Create New Actor";
+                ModelState.AddModelError(string.Empty, "Id cannot be empty");
             }
+
+            //call the create service
+
+            ViewBag.Title = "Create New Actor";
             return View();
         }
     }

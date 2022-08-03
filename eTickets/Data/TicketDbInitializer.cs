@@ -1,4 +1,4 @@
-﻿using eTickets.Data.@enum;
+﻿using eTickets.Helpers.enums;
 using eTickets.Models;
 
 namespace eTickets.Data

@@ -1,23 +1,21 @@
-﻿using eTickets.Data;
+﻿using eTickets.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace eTickets.Controllers
 {
     public class ProducersController : Controller
     {
-        private readonly TicketDbContext _context;
+        private readonly IProducerService _producerService;
 
-        public ProducersController(TicketDbContext context)
+        public ProducersController(IProducerService producerService)
         {
-            _context = context;
+            _producerService = producerService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var allProducers = await _context.Producers.ToListAsync();
-            return View(allProducers);
+            var response = await _producerService.GetAllAsync();
+            return View(response.Result);
         }
-       
     }
 }

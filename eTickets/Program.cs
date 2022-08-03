@@ -1,5 +1,5 @@
+using eTickets;
 using eTickets.Data;
-using eTickets.Data.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -13,7 +13,7 @@ builder.Services.AddDbContext<TicketDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString")));
 
 // Service Configuration
-builder.Services.AddScoped<IActorsService, ActorsService>();
+builder.Services.AddDomainServices();
 
 var app = builder.Build();
 

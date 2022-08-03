@@ -1,22 +1,21 @@
-﻿using eTickets.Data;
+﻿using eTickets.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace eTickets.Controllers
 {
     public class MoviesController : Controller
     {
-        private readonly TicketDbContext _context;
+        private readonly IMoviesService _moviesService;
 
-        public MoviesController(TicketDbContext context)
+        public MoviesController(IMoviesService moviesService)
         {
-            _context = context;
+            _moviesService = moviesService;
         }
 
         public async Task<IActionResult> Index()
         {
-            var movies = await _context.Movies.Include(n => n.Cinema).OrderBy(n => n.Name).ToListAsync();
-            return View(movies);
+            var response = await _moviesService.GetAllAsync();
+            return View(response.Result);
         }
     }
 }
